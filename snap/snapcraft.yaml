@@ -1,0 +1,115 @@
+name: wealthfolio
+base: core26
+version: '3.12.0'
+title: Wealthfolio
+icon: snap/gui/wealthfolio.png
+summary: Track investments, net worth, spending and goals on your own computer
+description: |
+  Wealthfolio is a private, local-first portfolio tracker. Track investments
+  across accounts, import activities from CSV files, and follow performance,
+  net worth, spending and budgets, goals and retirement plans. Your data is
+  stored in a local database on this computer.
+
+  This is an unofficial snap of Wealthfolio, built from the source of the
+  tagged release and published with permission from Teymz Inc. It is not the
+  official build. Report snap problems at
+  https://github.com/sidalit/wealthfolio-snap/issues and application bugs at
+  https://github.com/wealthfolio/wealthfolio/issues.
+
+  Official website: https://wealthfolio.app
+  Source code: https://github.com/wealthfolio/wealthfolio
+
+  API keys, sign-in tokens, profile passwords and the database encryption key
+  are stored in your desktop keyring. Connect it after installing:
+
+     sudo snap connect wealthfolio:password-manager-service
+
+  Updates come from the Snap Store. Wealthfolio is a trademark of Teymz Inc.
+license: AGPL-3.0-only
+grade: stable
+confinement: strict
+website: https://wealthfolio.app
+source-code:
+  - https://github.com/wealthfolio/wealthfolio
+  - https://github.com/sidalit/wealthfolio-snap
+issues:
+  - https://github.com/wealthfolio/wealthfolio/issues
+  - https://github.com/sidalit/wealthfolio-snap/issues
+contact: https://github.com/sidalit/wealthfolio-snap/issues
+
+platforms:
+  amd64:
+  arm64:
+
+slots:
+  single-instance:
+    interface: dbus
+    bus: session
+    name: com.teymz.wealthfolio.SingleInstance
+
+apps:
+  wealthfolio:
+    command: bin/Wealthfolio
+    extensions: [gnome]
+    slots:
+      - single-instance
+    plugs:
+      - home
+      - login-session-observe
+      - network
+      - network-bind
+      - password-manager-service
+      - removable-media
+
+parts:
+  pnpm:
+    plugin: nil
+    build-snaps:
+      - node/24/stable
+    override-build: |
+      # pnpm then runs the exact version in upstream's packageManager field.
+      npm install --global --prefix "$CRAFT_PART_INSTALL" pnpm@10
+    prime:
+      - -*
+
+  wealthfolio:
+    after: [pnpm]
+    plugin: rust
+    source: https://github.com/wealthfolio/wealthfolio.git
+    source-tag: v$SNAPCRAFT_PROJECT_VERSION
+    source-depth: 1
+    # Overridden by upstream's rust-toolchain.toml.
+    rust-channel: stable
+    build-snaps:
+      - node/24/stable
+    build-environment:
+      - PATH: $CRAFT_STAGE/bin:$PATH
+      - CARGO_BUILD_JOBS: $CRAFT_PARALLEL_BUILD_COUNT
+      # The heap Node gets on upstream's 16 GB CI runners, for the Vite build.
+      - NODE_OPTIONS: --max-old-space-size=4096
+      # Upstream's switch for distribution packages (README, "Packaging for a
+      # Distribution"): the app still announces releases but never installs them.
+      - WEALTHFOLIO_UPDATE_EXPLANATION: >-
+          This Wealthfolio snap is updated by the Snap Store.
+          To update now, run: sudo snap refresh wealthfolio
+      # Public Connect settings for source builds, from upstream's
+      # docs/connect-source-builds.md. Without them Connect is compiled out.
+      - CONNECT_AUTH_URL: https://auth.wealthfolio.app
+      - CONNECT_AUTH_PUBLISHABLE_KEY: sb_publishable_ZSZbXNtWtnh9i2nqJ2UL4A_NV8ZVutd
+    build-packages:
+      - build-essential
+      - cmake
+      - libdbus-1-dev
+      # SQLCipher links a vendored OpenSSL, whose build needs Perl.
+      - perl
+      - pkg-config
+    override-build: |
+      pnpm install --frozen-lockfile
+      # Unsigned build without updater artifacts, as upstream's build-linux.yml.
+      pnpm tauri build --no-bundle \
+        --config '{"bundle":{"createUpdaterArtifacts":false}}' -- --locked
+
+      install -Dm755 target/release/Wealthfolio "$CRAFT_PART_INSTALL/bin/Wealthfolio"
+      install -Dm644 "$CRAFT_PROJECT_DIR/snap/gui/wealthfolio.png" \
+        "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/Wealthfolio.png"
+      install -Dm644 LICENSE TRADEMARKS.md -t "$CRAFT_PART_INSTALL/usr/share/doc/wealthfolio"
