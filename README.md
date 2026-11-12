@@ -45,6 +45,10 @@ Use the application's settings. There are no `snap set` options.
 
 Each snap revision keeps its own copy of this data, so `snap revert` also returns to the data as it was before the last refresh.
 
+Add-ons from the in-app store or from a `.zip` file work as in other installations. Each profile keeps its add-ons under `profiles/<profile>/addons` in the folder above, and add-on secrets go to your keyring.
+
+Files for import, export and backups are opened and saved through your desktop's file chooser.
+
 Optional connections:
 
 ```bash
