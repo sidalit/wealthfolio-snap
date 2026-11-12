@@ -58,7 +58,6 @@ sudo snap connect wealthfolio:removable-media         # CSV files and backups on
 - If you protect a profile with a password or encrypt its database, the key is in your keyring. Keep `password-manager-service` connected; copying the data folder alone is not a complete backup. Use **Export backup** for a portable copy.
 - Data from another Wealthfolio installation, in `~/.local/share/com.teymz.wealthfolio`, is not visible to the snap. Use **Export backup** there and **Restore backup** in the snap.
 - A native installation uses the same keyring entries and the same single-instance name as the snap. Do not run both at the same time.
-- Files for import, export and backups must be in your home directory or on connected removable storage. Hidden folders directly under your home directory are not accessible.
 
 ## Build
 
