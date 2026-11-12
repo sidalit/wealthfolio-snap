@@ -67,7 +67,6 @@ parts:
     build-snaps:
       - node/24/stable
     override-build: |
-      # pnpm then runs the exact version in upstream's packageManager field.
       npm install --global --prefix "$CRAFT_PART_INSTALL" pnpm@10
     prime:
       - -*
@@ -85,27 +84,21 @@ parts:
     build-environment:
       - PATH: $CRAFT_STAGE/bin:$PATH
       - CARGO_BUILD_JOBS: $CRAFT_PARALLEL_BUILD_COUNT
-      # The heap Node gets on upstream's 16 GB CI runners, for the Vite build.
       - NODE_OPTIONS: --max-old-space-size=4096
-      # Upstream's switch for distribution packages (README, "Packaging for a
-      # Distribution"): the app still announces releases but never installs them.
       - WEALTHFOLIO_UPDATE_EXPLANATION: >-
           This Wealthfolio snap is updated by the Snap Store.
           To update now, run: sudo snap refresh wealthfolio
-      # Public Connect settings for source builds, from upstream's
-      # docs/connect-source-builds.md. Without them Connect is compiled out.
+      # Public values from upstream's docs/connect-source-builds.md.
       - CONNECT_AUTH_URL: https://auth.wealthfolio.app
       - CONNECT_AUTH_PUBLISHABLE_KEY: sb_publishable_ZSZbXNtWtnh9i2nqJ2UL4A_NV8ZVutd
     build-packages:
       - build-essential
       - cmake
       - libdbus-1-dev
-      # SQLCipher links a vendored OpenSSL, whose build needs Perl.
       - perl
       - pkg-config
     override-build: |
       pnpm install --frozen-lockfile
-      # Unsigned build without updater artifacts, as upstream's build-linux.yml.
       pnpm tauri build --no-bundle \
         --config '{"bundle":{"createUpdaterArtifacts":false}}' -- --locked
 
