@@ -1,6 +1,6 @@
 name: wealthfolio
 base: core26
-version: '3.12.0'
+version: '3.13.0'
 title: Wealthfolio
 icon: snap/gui/wealthfolio.png
 summary: Track investments, net worth, spending and goals on your own computer
